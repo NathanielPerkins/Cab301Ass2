@@ -127,7 +127,7 @@ bool testBruteForce(){
 	return check;
 }
 bool testMedian(){
-	/* testBruteForce is a test driver for the brute force method. Testing individual cases
+	/* testMedian is a test driver for the median method. Testing individual cases
 	 * Returns: True if all tests pass, Fail if any haven't.
 	 */
 	cout<<"Beginning testing of median"<<endl;
