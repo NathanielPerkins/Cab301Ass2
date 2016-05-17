@@ -8,6 +8,10 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
+#include <vector>
+
 using namespace std;
 
 bool testBruteForce();
@@ -17,11 +21,27 @@ int ceilingDiv(int num, int div);
 int select(int A[], int l, int m, int h);
 int partition(int A[],int l, int h);
 bool testMedian();
-
+vector<int> randomMedArray(int A[],int size);
+void checkBoth();
 int main(){
-	bool checkBrute = testBruteForce();
-	bool checkMedian = testMedian();
+	srand(time(NULL));
+	int size = 11;
+	int A[size];
+    vector<int> med= randomMedArray(A,size);
+    cout<<"Array A[] = ";
+    for (int i=0;i<size;i++){
+    	cout<<A[i]<< " ";
+    }
+    cout<<endl;
+    cout<<"median values: ";
+	for (unsigned int i=0;i<med.size();i++){
+		cout<<med[i]<< " ";
+	}
     return 0;
+}
+void checkBoth(){
+	bool checkBrute = testBruteForce();
+	bool checkMedian = testMedian(); //currently not working
 }
 int median(int A[],int size){
 	if (size == 1){
@@ -138,7 +158,7 @@ bool testMedian(){
 	int oddMed = 6;
 	int even[] = {1,2,3,4,5,6,7,8,9,10}; //10 elements
 	int evenSize = 10;
-	int evenMed = 6;
+	int evenMed = 6;//rightmost value of 2 median pair
 	int unsortedEven[] = {3,2,1,5,6,8,9,10,6,2}; //10 elements
 	int unsortedEMed = 6;
 	int unsortedOdd[] = {3,2,1,5,6,8,9,10,6,2,5}; //11 elements
@@ -191,6 +211,52 @@ bool testMedian(){
 	else { cout<<"Some tests have failed"<<endl;}
 
 	return check;
+}
+vector<int> randomMedArray(int A[],int size){
+	//If Even
+	vector<int> median;
+	if (size%2 == 0){
+		int start = rand()%10+1;
+		A[0] = start;
+		cout<<"Generating Array: ";
+		cout<<A[0]<<" ";
+		for (int i=1;i<size;i++){
+			A[i] = rand()%10+A[i-1];
+			cout<<A[i]<<" ";
+		}
+		//10 element array returns A[4] and A[5] as the possible median solutions
+		median.push_back(A[size/2 - 1]);
+		median.push_back(A[size/2]);
+		cout<<endl;
+		for (int i=0;i<size;i++){ //randomize the array, median remains unchanged
+			int index = rand()%size;
+			int swap = A[i];
+			A[i] = A[index];
+			A[index] = swap;
+		}
+
+	}
+	//If Odd
+	else{
+		int start = rand()%10+1;
+		A[0] = start;
+		cout<<"Generating Array: ";
+		cout<<A[0]<<" ";
+		for (int i=1;i<size;i++){
+			A[i] = rand()%10+A[i-1];
+			cout<<A[i]<<" ";
+		}
+		median.push_back(A[size/2]);
+		cout<<endl;
+		for (int i=0;i<size;i++){ //randomize the array, median remains unchanged
+			int index = rand()%size;
+			int swap = A[i];
+			A[i] = A[index];
+			A[index] = swap;
+		}
+
+	}
+	return median;
 }
 
 int bruteForceMedian(int A[], int size){
