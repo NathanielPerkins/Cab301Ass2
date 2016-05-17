@@ -112,7 +112,7 @@ int select(int A[],int l, int m, int h){
 }
 int partition(int A[],int l, int h){
 	int pivotVal = A[l];
-	int pivotLoc = 1;
+	int pivotLoc = l;
 	for (int j = l+1;j<=h;j++){
 		if (A[j]<pivotVal){
 			pivotLoc++;
