@@ -11,6 +11,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <vector>
+#include <fstream>
 
 using namespace std;
 
@@ -23,6 +24,9 @@ int partition(int A[],int l, int h);
 bool testMedian();
 vector<int> randomMedArray(int A[],int size);
 void checkBoth();
+bool SaveData(double time,int n, int steps,string filename);
+void testing();
+
 int main(){
 	srand(time(NULL));
 	int size = 11;
@@ -39,10 +43,52 @@ int main(){
 	}
     return 0;
 }
+//WORK IN PROGRESS
+void testing(){
+	string bruteFile = "bruteForceMedianData.csv";
+	string medianFile = "medianData.csv";
+
+	int inc = 1;
+	int count = 0;
+	clock_t start;
+	double time;
+	int steps = 0;
+	const int REPEAT = 100;
+	const int MAX_ITERATION = 10000;
+	for (int i=0; i<MAX_ITERATION;i+=inc){
+		count++;
+		if(count >= 9){
+			inc *= 10;
+			count = 0;
+		}
+		double timeAve = 0;
+		int stepsAve = 0;
+		time = 0;
+		// get the average of REPEAT number of times
+		for (int j=0;j<REPEAT;j++){
+			int A[i];
+			vector<int> med = randomMedArray(A,i);
+			start = clock();
+			int median = bruteForceMedian(A,i);
+
+		}
+	}
+}
 void checkBoth(){
 	bool checkBrute = testBruteForce();
 	bool checkMedian = testMedian(); //currently not working
 }
+bool SaveData(double time,int n, int steps,string filename){
+	ofstream myfile;
+	myfile.open(filename.c_str(),ios::app);
+	if(myfile.is_open()){
+		myfile<<n<<","<<steps<<","<<time<<"\n";
+		myfile.close();
+		return true;
+	}
+	return false;
+}
+
 int median(int A[],int size){
 	if (size == 1){
 		return A[0];
@@ -213,6 +259,18 @@ bool testMedian(){
 	return check;
 }
 vector<int> randomMedArray(int A[],int size){
+	/*
+	 * Builds an array of random elements to a given size,
+	 * returning the median of the array
+	 * A[]: array to generate
+	 * size: size of A[]
+	 * returns:
+	 * vector<int>: returns median value in a vector, if size
+	 * is even, it contains 2 values, corresponding to
+	 * vec[0] = bruteForceMedian
+	 * vec[1] = median
+	 * If size is odd, only returns one value
+	 */
 	//If Even
 	vector<int> median;
 	if (size%2 == 0){
