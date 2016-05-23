@@ -48,7 +48,7 @@ void testing(){
 	clock_t start; //to time individual array checks
 	clock_t total; //total time taken for testing function
 	const int REPEAT = 100; //number of times to repeat
-	const int MAX_ITERATION = 10000; //max array size
+	const int MAX_ITERATION = 100000; //max array size
 	int inc = 1;
 	int count = 0;
 	total = clock();
