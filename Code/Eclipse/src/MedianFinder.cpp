@@ -15,70 +15,154 @@
 
 using namespace std;
 
-bool testBruteForce();
+long long BF_STEPS = 0;
+long long M_STEPS = 0;
+double BF_TIME = 0.0;
+double M_TIME = 0.0;
+
+void testBruteForce();
 int bruteForceMedian(int A[],int size);
 int median(int A[],int size);
 int ceilingDiv(int num, int div);
 int select(int A[], int l, int m, int h);
 int partition(int A[],int l, int h);
-bool testMedian();
+void testMedian();
 vector<int> randomMedArray(int A[],int size);
-void checkBoth();
-bool SaveData(double time,int n, int steps,string filename);
+void checkAll();
+bool SaveData(double time,long long n, long long steps,string filename);
 void testing();
 
 int main(){
-	srand(time(NULL));
-	int size = 11;
-	int A[size];
-    vector<int> med= randomMedArray(A,size);
-    cout<<"Array A[] = ";
-    for (int i=0;i<size;i++){
-    	cout<<A[i]<< " ";
-    }
-    cout<<endl;
-    cout<<"median values: ";
-	for (unsigned int i=0;i<med.size();i++){
-		cout<<med[i]<< " ";
-	}
+	testing();
     return 0;
 }
 //WORK IN PROGRESS
 void testing(){
+	/** \Main function to find comparison of BF and Median method, saving
+	 *  data to csv files with following data
+	 *  Array size, steps taken, time taken
+	 */
 	string bruteFile = "bruteForceMedianData.csv";
 	string medianFile = "medianData.csv";
 
+	clock_t start; //to time individual array checks
+	clock_t total; //total time taken for testing function
+	const int REPEAT = 100; //number of times to repeat
+	const int MAX_ITERATION = 10000; //max array size
 	int inc = 1;
 	int count = 0;
-	clock_t start;
-	double time;
-	int steps = 0;
-	const int REPEAT = 100;
-	const int MAX_ITERATION = 10000;
-	for (int i=0; i<MAX_ITERATION;i+=inc){
+	total = clock();
+	cout<<"BEGGINNING TESTING OF BOTH METHODS"<<endl;
+	cout<<"Iteration: "<<MAX_ITERATION<<endl;
+	cout<<"Repeated:  "<<REPEAT<<endl;
+	for (long i=2; i<=MAX_ITERATION;i+=inc){
+		srand(time(NULL)); //reset each iteration in case repeating values
 		count++;
-		if(count >= 9){
-			inc *= 10;
+		if(count%3 == 0){
 			count = 0;
+			inc++; //No real difference between A[] of size 10000 and 10001
 		}
-		double timeAve = 0;
-		int stepsAve = 0;
-		time = 0;
-		// get the average of REPEAT number of times
-		for (int j=0;j<REPEAT;j++){
-			int A[i];
+		BF_STEPS = 0; //Reset global variables for this iteration
+		M_STEPS = 0;
+		BF_TIME = 0.0;
+		M_TIME = 0.0;
+		try{ //In case something has gone wrong with the globals
+			if((BF_STEPS || M_STEPS)){
+				throw;
+			}
+			else if ((M_TIME > 0.0)){
+				throw;
+			}
+			else if ((BF_TIME > 0.0)){
+				throw;
+			}
+		}
+		catch(...){
+			cout<<"DEBUGGING: GLOBALS not reset"<<endl;
+			cout<<"BF_STEPS = "<<BF_STEPS<<endl;
+			cout<<"M_STEPS  = "<<M_STEPS<<endl;
+			cout<<"BF_TIME  = "<<BF_TIME<<endl;
+			cout<<"M_TIME   = "<<M_TIME<<endl;
+		}
+		for (int j=0; j<REPEAT;j++){ //to take average results
+			int A[i]; //allocate new array
+			//median algorithm partially sorts the array, so generate new
+			//random instance each time
 			vector<int> med = randomMedArray(A,i);
 			start = clock();
-			int median = bruteForceMedian(A,i);
+			//check brute force first as median changes the array
+			int check = 0;
+			try{
+				check = bruteForceMedian(A,i);
+				if (check != med[0]){ //med[0] = BF median value
+					throw;
+				}
+			}
+			catch(...){
+				cout<<"DEBUGGING: Brute Force Median Method failed to return correct median"<<endl;
+				cout<<"Iteration (i,j):      "<<i<<j<<endl;
+				cout<<"Correct median value: "<< med[0]<<endl;
+				cout<<"BFM Method value:     "<< check<<endl;
+			}
+			BF_TIME += (clock() - start)/(double)CLOCKS_PER_SEC;
 
+			start = clock();
+			//check Median
+			try{
+				check = median(A,i);
+				if (check != med[1]){ //med[1] = median method value
+					throw;
+				}
+			}
+			catch(...){
+				cout<<"DEBUGGING: Median Method failed to return correct median"<<endl;
+				cout<<"Iteration (i,j):      "<<i<<j<<endl;
+				cout<<"Correct median value: "<< med[1]<<endl;
+				cout<<"Median Method value:  "<< check<<endl;
+			}
+			M_TIME += (clock() - start)/(double)CLOCKS_PER_SEC;
 		}
+		try{ //make sure each global has been at least changed
+			if(!(BF_STEPS || M_STEPS)){
+				throw;
+			}
+			else if (!(M_TIME > 0.0)){
+				throw;
+			}
+			else if (!(BF_TIME > 0.0)){
+				throw;
+			}
+		}
+		catch(...){
+			cout<<"DEBUGGING: GLOBALS not > 0"<<endl;
+			cout<<"BF_STEPS = "<<BF_STEPS<<endl;
+			cout<<"M_STEPS  = "<<M_STEPS<<endl;
+			cout<<"BF_TIME  = "<<BF_TIME<<endl;
+			cout<<"M_TIME   = "<<M_TIME<<endl;
+		}
+		BF_STEPS /= REPEAT; //Average the values
+		M_STEPS /= REPEAT;
+		BF_TIME /= (double)REPEAT;
+		M_TIME /= (double)REPEAT;
+		SaveData(BF_TIME,i,BF_STEPS,bruteFile.c_str());
+		SaveData(M_TIME,i,M_STEPS,medianFile.c_str());
 	}
+	cout<<"FINISHED"<<endl;
+	cout<<"Total Time taken: "<< (clock()-total)/(double)CLOCKS_PER_SEC <<"s"<<endl;
 }
-void checkBoth(){
-	bool checkBrute = testBruteForce();
-	bool checkMedian = testMedian(); //currently not working
+void checkAll(){
+	//Calls both check functions and ensures any changes still results in working functions
+	testBruteForce();
+	testMedian();
 }
-bool SaveData(double time,int n, int steps,string filename){
+bool SaveData(double time,long long n, long long steps,string filename){
+	/** \Saves all the data to a csv file
+	 *  \param time floating point value
+	 * 	\param n integer number
+	 * 	\param steps integer number
+	 * 	\param filename string
+	 * 	\return bool True if data saved and stored, False otherwise
+	 */
 	ofstream myfile;
 	myfile.open(filename.c_str(),ios::app);
 	if(myfile.is_open()){
@@ -90,6 +174,11 @@ bool SaveData(double time,int n, int steps,string filename){
 }
 
 int median(int A[],int size){
+	/** \Finds the median of an array using quicksort functionality
+	 *  \param A char array to find the median of
+	 *  \param size size of A
+	 *  \return median of A
+	 */
 	if (size == 1){
 		return A[0];
 	}
@@ -114,6 +203,7 @@ int partition(int A[],int l, int h){
 	int pivotVal = A[l];
 	int pivotLoc = l;
 	for (int j = l+1;j<=h;j++){
+		M_STEPS++; //Increments every array comparison
 		if (A[j]<pivotVal){
 			pivotLoc++;
 			int temp = A[pivotLoc];
@@ -126,9 +216,8 @@ int partition(int A[],int l, int h){
 	A[pivotLoc] = temp;
 	return pivotLoc;
 }
-bool testBruteForce(){
-	/* testBruteForce is a test driver for the brute force method. Testing individual cases
-	 * Returns: True if all tests pass, Fail if any haven't.
+void testBruteForce(){
+	/** \ Tests the potential cases of the BruteForceMedian algorithm
 	 */
 	cout<<"Beginning testing of bruteForceMedian"<<endl;
 	bool check = true;
@@ -190,11 +279,9 @@ bool testBruteForce(){
 	if (check) { cout<< "All tests have passed"<<endl;}
 	else { cout<<"Some tests have failed"<<endl;}
 
-	return check;
 }
-bool testMedian(){
-	/* testMedian is a test driver for the median method. Testing individual cases
-	 * Returns: True if all tests pass, Fail if any haven't.
+void testMedian(){
+	/** \ Tests the potential cases of the Median algorithm
 	 */
 	cout<<"Beginning testing of median"<<endl;
 	bool check = true;
@@ -256,36 +343,27 @@ bool testMedian(){
 	if (check) { cout<< "All tests have passed"<<endl;}
 	else { cout<<"Some tests have failed"<<endl;}
 
-	return check;
 }
 vector<int> randomMedArray(int A[],int size){
-	/*
-	 * Builds an array of random elements to a given size,
-	 * returning the median of the array
-	 * A[]: array to generate
-	 * size: size of A[]
-	 * returns:
-	 * vector<int>: returns median value in a vector, if size
-	 * is even, it contains 2 values, corresponding to
-	 * vec[0] = bruteForceMedian
-	 * vec[1] = median
-	 * If size is odd, only returns one value
+	/** \ Builds an array of random elements to a given size, returning the median of the array
+	 *  \param A[] array to generate by reference
+	 *  \param size size of A[]
+	 *  \returns vector<int> where [0] = median for bruteforce
+	 *  						   [1] = median for Median method
+	 *  						   [0] = [1] if size is odd
 	 */
+
 	//If Even
 	vector<int> median;
 	if (size%2 == 0){
 		int start = rand()%10+1;
 		A[0] = start;
-		cout<<"Generating Array: ";
-		cout<<A[0]<<" ";
 		for (int i=1;i<size;i++){
 			A[i] = rand()%10+A[i-1];
-			cout<<A[i]<<" ";
 		}
 		//10 element array returns A[4] and A[5] as the possible median solutions
 		median.push_back(A[size/2 - 1]);
 		median.push_back(A[size/2]);
-		cout<<endl;
 		for (int i=0;i<size;i++){ //randomize the array, median remains unchanged
 			int index = rand()%size;
 			int swap = A[i];
@@ -298,14 +376,11 @@ vector<int> randomMedArray(int A[],int size){
 	else{
 		int start = rand()%10+1;
 		A[0] = start;
-		cout<<"Generating Array: ";
-		cout<<A[0]<<" ";
 		for (int i=1;i<size;i++){
 			A[i] = rand()%10+A[i-1];
-			cout<<A[i]<<" ";
 		}
 		median.push_back(A[size/2]);
-		cout<<endl;
+		median.push_back(A[size/2]);
 		for (int i=0;i<size;i++){ //randomize the array, median remains unchanged
 			int index = rand()%size;
 			int swap = A[i];
@@ -318,19 +393,17 @@ vector<int> randomMedArray(int A[],int size){
 }
 
 int bruteForceMedian(int A[], int size){
-	/*
-	 * Finds the median of a given array
-	 * int A[]: array of integers to find median of
-	 * int size: integer size of A[]
-	 * returns: Median value of A[]
-	 *
-	 * currently fails on the odd array
+	/** \Finds the median value of an array
+	 *  \param A char array to find median of
+	 *  \param size int size of A
+	 *  \return median of A
 	 */
 	int k = ceilingDiv(size,2);
 	for (int i = 0;i<size;i++){
 		int numSmaller = 0;
 		int numEqual = 0;
 		for (int j = 0;j<size;j++){
+			BF_STEPS++; //Every array comparison, similar to Median method
 			if (A[j]<A[i]){
 				numSmaller++;
 			}
@@ -347,6 +420,11 @@ int bruteForceMedian(int A[], int size){
 	return 0;
 }
 int ceilingDiv(int num, int div){
+	/** \Finds the integer ceiling division of two numbers
+	 *  \param num integer numerator of division
+	 *  \param div integer divisor of division
+	 *  \return int ceiling(num/div)
+	 */
 	if (num%div == 0){
 		return num/div;
 	}
