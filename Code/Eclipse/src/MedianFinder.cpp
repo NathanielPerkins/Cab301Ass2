@@ -22,10 +22,14 @@ double M_TIME = 0.0;
 
 void testBruteForce();
 int bruteForceMedian(int A[],int size);
-int median(int A[],int size);
+int bruteForceMedianCLK(int A[],int size);
 int ceilingDiv(int num, int div);
+int median(int A[],int size);
 int select(int A[], int l, int m, int h);
 int partition(int A[],int l, int h);
+int medianCLK(int A[],int size);
+int selectCLK(int A[], int l, int m, int h);
+int partitionCLK(int A[],int l, int h);
 void testMedian();
 vector<int> randomMedArray(int A[],int size);
 void checkAll();
@@ -47,21 +51,15 @@ void testing(){
 
 	clock_t start; //to time individual array checks
 	clock_t total; //total time taken for testing function
-	const int REPEAT = 100; //number of times to repeat
+	const int REPEAT = 50; //number of times to repeat
 	const int MAX_ITERATION = 100000; //max array size
-	int inc = 1;
-	int count = 0;
+	int inc = 10;
 	total = clock();
 	cout<<"BEGGINNING TESTING OF BOTH METHODS"<<endl;
 	cout<<"Iteration: "<<MAX_ITERATION<<endl;
 	cout<<"Repeated:  "<<REPEAT<<endl;
-	for (long i=2; i<=MAX_ITERATION;i+=inc){
+	for (long i=10; i<=MAX_ITERATION;i+=inc){
 		srand(time(NULL)); //reset each iteration in case repeating values
-		count++;
-		if(count%3 == 0){
-			count = 0;
-			inc++; //No real difference between A[] of size 10000 and 10001
-		}
 		BF_STEPS = 0; //Reset global variables for this iteration
 		M_STEPS = 0;
 		BF_TIME = 0.0;
@@ -86,14 +84,19 @@ void testing(){
 		}
 		for (int j=0; j<REPEAT;j++){ //to take average results
 			int A[i]; //allocate new array
+			int B[i]; //Copy to hold A
 			//median algorithm partially sorts the array, so generate new
 			//random instance each time
 			vector<int> med = randomMedArray(A,i);
+			for (int k=0;k<i;k++){
+				B[k] = A[k];
+			}
+
 			start = clock();
-			//check brute force first as median changes the array
+			//check brute force first as median changes the array, only checking time
 			int check = 0;
 			try{
-				check = bruteForceMedian(A,i);
+				check = bruteForceMedianCLK(A,i);
 				if (check != med[0]){ //med[0] = BF median value
 					throw;
 				}
@@ -109,7 +112,7 @@ void testing(){
 			start = clock();
 			//check Median
 			try{
-				check = median(A,i);
+				check = medianCLK(A,i);
 				if (check != med[1]){ //med[1] = median method value
 					throw;
 				}
@@ -120,7 +123,37 @@ void testing(){
 				cout<<"Correct median value: "<< med[1]<<endl;
 				cout<<"Median Method value:  "<< check<<endl;
 			}
+
 			M_TIME += (clock() - start)/(double)CLOCKS_PER_SEC;
+
+			//Now check computation steps
+			try{
+				check = bruteForceMedian(B,i);
+				if (check != med[0]){ //med[0] = BF median value
+					throw;
+				}
+			}
+			catch(...){
+				cout<<"DEBUGGING: Brute Force Median Method failed to return correct median"<<endl;
+				cout<<"Iteration (i,j):      "<<i<<j<<endl;
+				cout<<"Correct median value: "<< med[0]<<endl;
+				cout<<"BFM Method value:     "<< check<<endl;
+			}
+			BF_TIME += (clock() - start)/(double)CLOCKS_PER_SEC;
+
+			//check Median
+			try{
+				check = median(B,i);
+				if (check != med[1]){ //med[1] = median method value
+					throw;
+				}
+			}
+			catch(...){
+				cout<<"DEBUGGING: Median Method failed to return correct median"<<endl;
+				cout<<"Iteration (i,j):      "<<i<<j<<endl;
+				cout<<"Correct median value: "<< med[1]<<endl;
+				cout<<"Median Method value:  "<< check<<endl;
+			}
 		}
 		try{ //make sure each global has been at least changed
 			if(!(BF_STEPS || M_STEPS)){
@@ -204,6 +237,48 @@ int partition(int A[],int l, int h){
 	int pivotLoc = l;
 	for (int j = l+1;j<=h;j++){
 		M_STEPS++; //Increments every array comparison
+		if (A[j]<pivotVal){
+			pivotLoc++;
+			int temp = A[pivotLoc];
+			A[pivotLoc] = A[j];
+			A[j] = temp;
+		}
+	}
+	int temp = A[l];
+	A[l] = A[pivotLoc];
+	A[pivotLoc] = temp;
+	return pivotLoc;
+}
+int medianCLK(int A[],int size){
+	/** \Finds the median of an array using quicksort functionality
+	 *  \param A char array to find the median of
+	 *  \param size size of A
+	 *  \return median of A
+	 */
+	if (size == 1){
+		return A[0];
+	}
+	else {
+		return select(A,0,size/2,size-1);
+	}
+}
+int selectCLK(int A[],int l, int m, int h){
+	int pos = partition(A,l,h);
+	if (pos == m){
+		return A[pos];
+	}
+	if (pos > m){
+		return select(A,l,m,pos-1);
+	}
+	if (pos < m){
+		return select(A,pos+1,m,h);
+	}
+	return 0;
+}
+int partitionCLK(int A[],int l, int h){
+	int pivotVal = A[l];
+	int pivotLoc = l;
+	for (int j = l+1;j<=h;j++){
 		if (A[j]<pivotVal){
 			pivotLoc++;
 			int temp = A[pivotLoc];
@@ -404,6 +479,32 @@ int bruteForceMedian(int A[], int size){
 		int numEqual = 0;
 		for (int j = 0;j<size;j++){
 			BF_STEPS++; //Every array comparison, similar to Median method
+			if (A[j]<A[i]){
+				numSmaller++;
+			}
+			else{
+				if(A[i]==A[j]){
+					numEqual++;
+				}
+			}
+		}
+		if ((numSmaller < k)&&(k <= (numSmaller+numEqual))){
+			return A[i];
+		}
+	}
+	return 0;
+}
+int bruteForceMedianCLK(int A[], int size){
+	/** \Finds the median value of an array
+	 *  \param A char array to find median of
+	 *  \param size int size of A
+	 *  \return median of A
+	 */
+	int k = ceilingDiv(size,2);
+	for (int i = 0;i<size;i++){
+		int numSmaller = 0;
+		int numEqual = 0;
+		for (int j = 0;j<size;j++){
 			if (A[j]<A[i]){
 				numSmaller++;
 			}
